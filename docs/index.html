@@ -1,0 +1,240 @@
+# path: docs/index.html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sage-Orchestrator — Prompt Builder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{--w:900px}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.45;margin:0;background:#0b1220;color:#e6ebf2}
+    header{padding:24px 16px;border-bottom:1px solid #1c2742;background:#0f1830}
+    header h1{margin:0;font-size:22px}
+    main{max-width:var(--w);margin:24px auto;padding:0 16px;display:grid;gap:16px}
+    .card{background:#111a34;border:1px solid #1c2742;border-radius:12px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;font-size:13px;margin:6px 0}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #2a3965;background:#0b132b;color:#e6ebf2}
+    textarea{min-height:120px}
+    .muted{color:#9eb0d0;font-size:12px}
+    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    button{border:1px solid #2a3965;background:#0b132b;color:#e6ebf2;border-radius:10px;padding:10px 14px;cursor:pointer}
+    button:hover{background:#0f1d3b}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono",monospace}
+    .pill{display:inline-block;border:1px solid #2a3965;border-radius:999px;padding:4px 10px;margin:2px 6px 2px 0}
+    footer{max-width:var(--w);margin:8px auto 32px;padding:0 16px;color:#9eb0d0;font-size:12px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>🧭 Sage-Orchestrator — Prompt Builder</h1>
+  <div class="muted">Fill in your objective & preferences → generate a complete, copy-pasteable system prompt.</div>
+</header>
+
+<main>
+  <section class="card">
+    <h3>1) Project Basics</h3>
+    <div class="row">
+      <div>
+        <label>Goal (one sentence)</label>
+        <input id="goal" placeholder="e.g., Ship a minimal MI demo and docs in ./">
+      </div>
+      <div>
+        <label>Deliverable location (repo path or doc target)</label>
+        <input id="location" placeholder="./, docs/README.md, etc.">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Environment</label>
+        <select id="env">
+          <option>local</option><option>Docker</option><option>Colab</option><option>Cloud</option>
+        </select>
+      </div>
+      <div>
+        <label>OS</label>
+        <select id="os">
+          <option>macOS</option><option>Linux</option><option>Windows</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Repo root path</label>
+        <input id="repo" placeholder="./">
+      </div>
+      <div>
+        <label>Risk & timebox</label>
+        <select id="risk">
+          <option>cautious — 10–20 min/step</option>
+          <option selected>standard — 5–15 min/step</option>
+          <option>aggressive — 3–10 min/step</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>2) Focus Areas (pick up to 3)</h3>
+    <div class="actions" id="focus">
+      <label class="pill"><input type="checkbox" value="demo"> demo</label>
+      <label class="pill"><input type="checkbox" value="docs"> docs</label>
+      <label class="pill"><input type="checkbox" value="benchmarks"> benchmarks</label>
+      <label class="pill"><input type="checkbox" value="KSG"> KSG</label>
+      <label class="pill"><input type="checkbox" value="streaming"> streaming</label>
+      <label class="pill"><input type="checkbox" value="API polish"> API polish</label>
+      <label class="pill"><input type="checkbox" value="partner pack"> partner pack</label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>3) LLM & Style</h3>
+    <div class="row">
+      <div>
+        <label>Preferred LLM</label>
+        <select id="llm">
+          <option>Sage-Orchestrator v5</option>
+          <option>Claude-Architect v5</option>
+          <option>Grok</option>
+          <option>DeepSeek</option>
+          <option>Gemini</option>
+        </select>
+      </div>
+      <div>
+        <label>Tone / Notes (optional)</label>
+        <input id="tone" placeholder="terse, artifact-first; no fluff; etc.">
+      </div>
+    </div>
+    <label>Additional context (optional)</label>
+    <textarea id="context" placeholder="Constraints, datasets, partners, deadlines..."></textarea>
+  </section>
+
+  <section class="card">
+    <h3>4) Generate Prompt</h3>
+    <div class="actions">
+      <button id="generate">Generate</button>
+      <button id="copy">Copy to Clipboard</button>
+      <button id="download">Download .md</button>
+    </div>
+    <p class="muted">Output is a complete system prompt with STATE → BUILD → VERIFY → ADVANCE cadence and your selections embedded.</p>
+    <textarea id="output" class="mono" placeholder="Generated prompt will appear here..."></textarea>
+  </section>
+</main>
+
+<footer>
+  Built for <a href="https://github.com/justindbilyeu/Mega-Prompt" style="color:#c2d4ff">Mega-Prompt</a>. Host via GitHub Pages (Settings → Pages → Source: <code>main</code>, Folder: <code>/docs</code>).
+</footer>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+function selectedFocus(){
+  return Array.from(document.querySelectorAll('#focus input:checked')).map(x=>x.value).slice(0,3);
+}
+function esc(s){return (s||'').trim()}
+function buildPrompt(){
+  const goal=esc($('goal').value);
+  const location=esc($('location').value||'./');
+  const env=esc($('env').value);
+  const os=esc($('os').value);
+  const repo=esc($('repo').value||'./');
+  const risk=esc($('risk').value);
+  const focus=selectedFocus().join(', ') || 'demo';
+  const llm=esc($('llm').value);
+  const tone=esc($('tone').value||'artifact-first, terse, no fluff');
+  const ctx=esc($('context').value);
+
+  const hdr = `# ${llm} — Orchestrated Build Prompt`;
+
+  const startup = `## Startup (ask once)
+1) Goal: ${goal || '[fill]'}
+2) Deliverable location: ${location}
+3) Environment: ${env} on ${os}
+4) Repo root: ${repo}
+5) Focus areas: ${focus}
+6) Risk & timebox: ${risk}
+${ctx ? '7) Context: ' + ctx : ''}`;
+
+  const body = `You are ${llm}, a disciplined research & build partner.
+Your purpose is to transform intent into **immediately usable artifacts** via small, reversible increments.
+Follow the immutable cycle: **STATE → BUILD → VERIFY → ADVANCE**.
+Keep prose tight; prefer copy-pasteable artifacts.
+
+## Operating Discipline
+- Max **2 artifacts** per step (files, command blocks, or patches).
+- Every file starts with \`# path: relative/path.ext\`; no placeholders/TODOs; zero prose inside code fences.
+- **VERIFY** includes success **and** expected failure cases; include rollback notes when changing files or env.
+- Report information in **bits** (convert to nats by dividing by ln(2) if relevant). Include units and confidence when appropriate.
+- Use external tools only if provided and they shorten verification; otherwise prefer synthetic/user data.
+
+## Tool Invocation (optional)
+[TOOL CALL]
+Action:
+Args:
+Purpose:
+Expected:
+(Post-result: synthesize impact; revert if added >1 cycle overhead.)
+
+## Resonance Checkpoint (every 3 steps)
+- Alignment score (0–1): target ≥0.8; else recalibrate.
+- Prune check: cut if >20% redundant; watch dep creep (>2 new deps/step).
+- Log format: \`[Resonance: 0.92 ↑]\`.
+
+## Adaptive Efficiency (at each cycle)
+- If progress <5%: flag plateau → resample 2–3 heuristics; apply forgetting factor λ=0.9 to stale states (>2 cycles).
+- Under variance σ>0.2: choose low-risk reversible option; shadow-run first.
+- Always log diffs; revert on VERIFY failure.
+
+## Collaboration
+[DISPATCH]
+To: <LLM>
+Role: <domain strength>
+Context (≤100 words): <objective + artifacts + constraints>
+Single Q: <precise, testable ask>
+Format: <code|table|analysis|critique>
+[/DISPATCH]
+On return: SYNTHESIS as a small table of inputs | diffs | chosen (testable first).
+
+## Validation & Citation (operationalized)
+- In BUILD: inline \`# Source: Author (Year) [flags]\` for any external algorithm/constant/formula.
+- In VERIFY: include a test that validates the cited claim against your implementation.
+- Rule: citation without verification = incomplete step.
+
+## Example First Move
+STATE: Add a minimal smoke test proving MI works now in ${repo}.
+BUILD (file + command):
+\`\`\`python
+# path: scripts/smoke_test.py
+# description: Histogram MI smoke test (bits)
+import numpy as np
+def mi(x,y,bins=64):
+    h,_=np.histogramdd(np.vstack([x,y]).T,bins=bins)
+    pxy=h/h.sum(); px=pxy.sum(1,keepdims=True); py=pxy.sum(0,keepdims=True)
+    return float((pxy*np.log2((pxy+1e-12)/(px@py+1e-12))).sum())
+if __name__=='__main__':
+    rng=np.random.default_rng(0)
+    x=rng.normal(size=50_000); y=0.6*x+0.4*rng.normal(size=50_000)
+    print(f"MI: {mi(x,y):.3f} bits")
+\`\`\`
+\`\`\`bash
+# command: Run smoke test
+# environment: ${env} on ${os}
+python -m venv .venv && . .venv/bin/activate || source .venv/bin/activate 2>/dev/null || true
+pip install numpy
+python scripts/smoke_test.py
+\`\`\`
+VERIFY:
+- Output shows MI > 0 bits; exit code 0; repeatable within noise.
+- Failure mode: numpy missing → install as above.
+ADVANCE:
+- Add Quickstart to README, or wire a KSG stub next?
+
+${startup}
+`;
+
+  return `${hdr}\n\n${body}`;
+}
+$('generate').onclick = ()=>{$('output').value = buildPrompt();$('output').scrollIntoView({behavior:'smooth'});};
+$('copy').onclick = async ()=>{const t=$('output').value.trim();if(!t)return alert('Generate the prompt first.');await navigator.clipboard.writeText(t);alert('Prompt copied to clipboard.')};
+$('download').onclick = ()=>{const b=new Blob([$('output').value||''],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='orchestrator_prompt.md';a.click();URL.revokeObjectURL(a.href)};
+</script>
+</body>
+</html>
