@@ -6,7 +6,9 @@
   <title>Sage-Orchestrator — Prompt Builder</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    :root{--w:900px}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.45;margin:0;background:#0b1220;color:#e6ebf2}
+    :root{--w:900px}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.45;margin:0;background:#0b1220;color:#e6ebf2}
     header{padding:24px 16px;border-bottom:1px solid #1c2742;background:#0f1830}
     header h1{margin:0;font-size:22px}
     main{max-width:var(--w);margin:24px auto;padding:0 16px;display:grid;gap:16px}
@@ -14,23 +16,26 @@
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{display:block;font-size:13px;margin:6px 0}
     input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #2a3965;background:#0b132b;color:#e6ebf2}
-    textarea{min-height:120px}
+    textarea{min-height:200px}
     .muted{color:#9eb0d0;font-size:12px}
     .actions{display:flex;flex-wrap:wrap;gap:8px}
     button{border:1px solid #2a3965;background:#0b132b;color:#e6ebf2;border-radius:10px;padding:10px 14px;cursor:pointer}
     button:hover{background:#0f1d3b}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono",monospace}
-    .pill{display:inline-block;border:1px solid #2a3965;border-radius:999px;padding:4px 10px;margin:2px 6px 2px 0}
+    .pill{display:inline-block;border:1px solid #2a3965;border-radius:12px;padding:8px 12px;margin:8px 0;width:100%}
+    .pill input{margin-right:8px;transform:translateY(1px)}
     footer{max-width:var(--w);margin:8px auto 32px;padding:0 16px;color:#9eb0d0;font-size:12px}
+    a, a:visited{color:#c2d4ff}
   </style>
 </head>
 <body>
 <header>
   <h1>🧭 Sage-Orchestrator — Prompt Builder</h1>
-  <div class="muted">Fill in your objective & preferences → generate a complete, copy-pasteable system prompt.</div>
+  <div class="muted">Fill in your objective & preferences → click Generate to produce a complete, copy-pasteable system prompt.</div>
 </header>
 
 <main>
+  <!-- 1) Basics -->
   <section class="card">
     <h3>1) Project Basics</h3>
     <div class="row">
@@ -73,19 +78,43 @@
     </div>
   </section>
 
+  <!-- 2) Focus Areas -->
   <section class="card">
     <h3>2) Focus Areas (pick up to 3)</h3>
-    <div class="actions" id="focus">
-      <label class="pill"><input type="checkbox" value="demo"> demo</label>
-      <label class="pill"><input type="checkbox" value="docs"> docs</label>
-      <label class="pill"><input type="checkbox" value="benchmarks"> benchmarks</label>
-      <label class="pill"><input type="checkbox" value="KSG"> KSG</label>
-      <label class="pill"><input type="checkbox" value="streaming"> streaming</label>
-      <label class="pill"><input type="checkbox" value="API polish"> API polish</label>
-      <label class="pill"><input type="checkbox" value="partner pack"> partner pack</label>
+    <div class="muted" style="margin-bottom:8px">Choose emphases for your first increments. These will inform examples and notes in the generated prompt.</div>
+    <div id="focus" style="display:block">
+      <label class="pill">
+        <input type="checkbox" value="demo"> <strong>demo</strong><br>
+        <span class="muted">Minimal, runnable example (end-to-end smoke test) to prove the pipeline works now.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="docs"> <strong>docs</strong><br>
+        <span class="muted">README/Quickstart/API notes; tighten install steps and usage examples.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="benchmarks"> <strong>benchmarks</strong><br>
+        <span class="muted">Accuracy/speed comparisons with expected ranges and reproducible scripts.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="KSG"> <strong>KSG</strong><br>
+        <span class="muted">Implement the Kraskov–Stögbauer–Grassberger MI estimator with tests and sanity checks.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="streaming"> <strong>streaming</strong><br>
+        <span class="muted">Sliding-window / online APIs; incremental computation and example notebooks.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="API polish"> <strong>API polish</strong><br>
+        <span class="muted">Ergonomics, error messages, types; make the surface area pleasant and stable.</span>
+      </label>
+      <label class="pill">
+        <input type="checkbox" value="partner pack"> <strong>partner pack</strong><br>
+        <span class="muted">Sales/demo bundle: scripts, screenshots, short deck, and repeatable demo flow.</span>
+      </label>
     </div>
   </section>
 
+  <!-- 3) LLM & Style -->
   <section class="card">
     <h3>3) LLM & Style</h3>
     <div class="row">
@@ -108,28 +137,33 @@
     <textarea id="context" placeholder="Constraints, datasets, partners, deadlines..."></textarea>
   </section>
 
+  <!-- 4) Manual Generate -->
   <section class="card">
     <h3>4) Generate Prompt</h3>
+    <p class="muted">Manual mode: click <em>Generate</em> to produce/update your prompt.</p>
     <div class="actions">
       <button id="generate">Generate</button>
       <button id="copy">Copy to Clipboard</button>
       <button id="download">Download .md</button>
     </div>
-    <p class="muted">Output is a complete system prompt with STATE → BUILD → VERIFY → ADVANCE cadence and your selections embedded.</p>
     <textarea id="output" class="mono" placeholder="Generated prompt will appear here..."></textarea>
   </section>
 </main>
 
 <footer>
-  Built for <a href="https://github.com/justindbilyeu/Mega-Prompt" style="color:#c2d4ff">Mega-Prompt</a>. Host via GitHub Pages (Settings → Pages → Source: <code>main</code>, Folder: <code>/docs</code>).
+  Built for <a href="https://github.com/justindbilyeu/Mega-Prompt">Mega-Prompt</a>. Host via GitHub Pages (Settings → Pages → Source: <code>main</code>, Folder: <code>/docs</code>).
 </footer>
 
 <script>
 const $ = (id)=>document.getElementById(id);
+
 function selectedFocus(){
-  return Array.from(document.querySelectorAll('#focus input:checked')).map(x=>x.value).slice(0,3);
+  return Array.from(document.querySelectorAll('#focus input:checked'))
+    .map(x=>x.value).slice(0,3);
 }
+
 function esc(s){return (s||'').trim()}
+
 function buildPrompt(){
   const goal=esc($('goal').value);
   const location=esc($('location').value||'./');
@@ -156,7 +190,7 @@ ${ctx ? '7) Context: ' + ctx : ''}`;
   const body = `You are ${llm}, a disciplined research & build partner.
 Your purpose is to transform intent into **immediately usable artifacts** via small, reversible increments.
 Follow the immutable cycle: **STATE → BUILD → VERIFY → ADVANCE**.
-Keep prose tight; prefer copy-pasteable artifacts.
+Keep prose tight; prefer copy-pasteable artifacts. Tone: ${tone}.
 
 ## Operating Discipline
 - Max **2 artifacts** per step (files, command blocks, or patches).
@@ -232,9 +266,23 @@ ${startup}
 
   return `${hdr}\n\n${body}`;
 }
-$('generate').onclick = ()=>{$('output').value = buildPrompt();$('output').scrollIntoView({behavior:'smooth'});};
-$('copy').onclick = async ()=>{const t=$('output').value.trim();if(!t)return alert('Generate the prompt first.');await navigator.clipboard.writeText(t);alert('Prompt copied to clipboard.')};
-$('download').onclick = ()=>{const b=new Blob([$('output').value||''],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='orchestrator_prompt.md';a.click();URL.revokeObjectURL(a.href)};
+
+// Manual-only wiring
+$('generate').onclick = ()=>{ $('output').value = buildPrompt(); };
+$('copy').onclick = async ()=>{
+  const t = $('output').value.trim();
+  if (!t) return alert('Generate the prompt first.');
+  await navigator.clipboard.writeText(t);
+  alert('Prompt copied to clipboard.');
+};
+$('download').onclick = ()=>{
+  const blob = new Blob([$('output').value || ''], {type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'orchestrator_prompt.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
 </script>
 </body>
 </html>
